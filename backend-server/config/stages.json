@@ -1,0 +1,38 @@
+{
+  "description": "Demonstration coordinates for SmartBus development. These are not official APSRTC operational data.",
+  "routeId": "R-VJA-GNT-01",
+  "stages": [
+    {
+      "stageId": "STAGE_01",
+      "stageName": "Vijayawada PNBS",
+      "latitude": 16.5062,
+      "longitude": 80.648,
+      "sequence": 1,
+      "routeId": "R-VJA-GNT-01"
+    },
+    {
+      "stageId": "STAGE_02",
+      "stageName": "Mangalagiri",
+      "latitude": 16.4308,
+      "longitude": 80.5684,
+      "sequence": 2,
+      "routeId": "R-VJA-GNT-01"
+    },
+    {
+      "stageId": "STAGE_03",
+      "stageName": "Kaza",
+      "latitude": 16.3676,
+      "longitude": 80.5272,
+      "sequence": 3,
+      "routeId": "R-VJA-GNT-01"
+    },
+    {
+      "stageId": "STAGE_04",
+      "stageName": "Guntur Bus Stand",
+      "latitude": 16.3067,
+      "longitude": 80.4365,
+      "sequence": 4,
+      "routeId": "R-VJA-GNT-01"
+    }
+  ]
+}
