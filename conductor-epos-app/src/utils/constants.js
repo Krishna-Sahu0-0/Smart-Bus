@@ -3,6 +3,7 @@ export const SOCKET_URL = process.env.EXPO_PUBLIC_SOCKET_URL || 'http://localhos
 export const DEMO_BUS_ID = process.env.EXPO_PUBLIC_DEMO_BUS_ID || 'AP11Z1234';
 export const DEMO_ROUTE_ID = process.env.EXPO_PUBLIC_DEMO_ROUTE_ID || 'R-VJA-GNT-01';
 export const DEMO_CONDUCTOR_ID = process.env.EXPO_PUBLIC_CONDUCTOR_ID || 'COND-001';
+export const TELEMETRY_INTERVAL_MS = 3000;
 export const PAYMENT_TYPES = ['CASH', 'UPI', 'CARD'];
 export const seatStatusLabels = {
   MANY_SEATS_AVAILABLE: { english: 'Seats Available', telugu: 'మంచి సీట్లు ఉన్నాయి' },

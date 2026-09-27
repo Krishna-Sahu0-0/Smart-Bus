@@ -35,4 +35,6 @@ export const apiService = {
   createTicket: (payload) => request('/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   createQuickPassCount: (payload) => request('/passes/quick-count', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
   scanPass: (payload) => request('/passes/scan', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  sendTelemetry: (payload) => request('/telemetry', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  getEta: (busId) => request(`/buses/${busId}/eta`),
 };
