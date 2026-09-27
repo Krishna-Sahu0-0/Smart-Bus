@@ -5,6 +5,7 @@ const express = require('express');
 const http = require('http');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
+const apiRouter = require('./routes/api');
 
 const app = express();
 const httpServer = http.createServer(app);
@@ -19,6 +20,7 @@ let databaseStatus = 'disconnected';
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 app.use(express.json());
+app.use('/api', apiRouter(io));
 
 app.get('/api/health', (req, res) => {
   const connected = databaseStatus === 'connected';
