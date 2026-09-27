@@ -33,6 +33,7 @@ export default function EposShellScreen({ navigation, session, onLogout }) {
       <View style={styles.identity}><Text style={styles.label}>BUS</Text><Text style={styles.value}>{bus?.busId || DEMO_BUS_ID}</Text><Text style={styles.label}>ROUTE</Text><Text style={styles.value}>{bus?.routeId || DEMO_ROUTE_ID}</Text><Text style={styles.label}>CURRENT STAGE</Text><Text style={styles.value}>{currentStage?.stageName || bus?.currentStageId || 'UNAVAILABLE'}</Text></View>
       {loading ? <ActivityIndicator color={colors.amber} size="large" /> : null}
       <View style={styles.metrics}><View><Text style={styles.label}>OCCUPANCY</Text><Text style={styles.metric}>{bus?.occupancy ?? '—'}</Text></View><View><Text style={styles.label}>AVAILABLE SEATS</Text><Text style={styles.metric}>{bus?.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>SERVICE</Text><Text style={[styles.metric, bus?.status === 'VEHICLE_DISABLED' && { color: colors.red }]}>{bus?.status || 'UNKNOWN'}</Text></View></View>
+      <PrimaryButton label="OPEN TICKETING" onPress={() => navigation.navigate('Ticketing')} disabled={!online} />
       <View style={styles.coming}><Text style={styles.comingTitle}>TERMINAL READY</Text><Text style={styles.comingText}>Ticketing controls will be added after this launch milestone is verified on Expo Go.</Text></View>
       <PrimaryButton label="SIGN OUT" onPress={signOut} tone="red" />
     </ScrollView>

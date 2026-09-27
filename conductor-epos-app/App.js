@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import LoginScreen from './src/screens/LoginScreen';
 import EposShellScreen from './src/screens/EposShellScreen';
+import TicketingScreen from './src/screens/TicketingScreen';
 import { getSession } from './src/services/authService';
 import { colors } from './src/utils/constants';
 
@@ -32,6 +33,7 @@ export default function App() {
         <Stack.Screen name="Terminal">
           {(props) => <EposShellScreen {...props} session={session} onLogout={() => setSession(null)} />}
         </Stack.Screen>
+        <Stack.Screen name="Ticketing" component={TicketingScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

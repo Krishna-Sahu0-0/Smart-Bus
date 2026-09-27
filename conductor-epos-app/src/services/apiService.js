@@ -14,6 +14,9 @@ async function request(path, options = {}) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok || data.success === false) throw new Error(data.message || `Request failed (${response.status})`);
     return data;
+  } catch (error) {
+    if (error.name === 'AbortError' || error.name === 'TypeError') throw new Error('Unable to connect to SmartBus server.');
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
@@ -26,4 +29,9 @@ export const apiService = {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   }),
+  getBus: (busId) => request(`/buses/${busId}`),
+  getOccupancy: (busId) => request(`/buses/${busId}/occupancy`),
+  getStages: (routeId) => request(`/stages/${routeId}`),
+  createTicket: (payload) => request('/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
+  createQuickPassCount: (payload) => request('/passes/quick-count', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }),
 };
