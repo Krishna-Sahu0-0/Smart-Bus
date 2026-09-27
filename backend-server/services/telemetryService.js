@@ -7,6 +7,7 @@ const { processGeofence } = require('./geofenceService');
 const { recalculateAndSave } = require('./occupancyService');
 const { processTraffic } = require('./trafficService');
 const { calculateEta } = require('./etaService');
+const { processStationaryBreakdown } = require('./breakdownService');
 
 async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKmh, timestamp }) {
   const telemetry = await Telemetry.create({ busId: bus.busId, routeId, latitude, longitude, speedKmh, timestamp });
@@ -28,6 +29,7 @@ async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKm
   }
 
   const traffic = processTraffic({ bus, speedKmh, timestamp, insideGeofence: geofence.insideGeofence });
+  const breakdown = await processStationaryBreakdown({ io, bus, routeId, speedKmh, timestamp, insideGeofence: geofence.insideGeofence });
   const eta = await calculateEta(bus);
   await bus.save();
   const occupancy = await recalculateAndSave(bus);
@@ -65,13 +67,12 @@ async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKm
   io.emit('ETA_UPDATE', { busId: bus.busId, ...eta });
   io.emit('OCCUPANCY_UPDATE', { busId: bus.busId, ...occupancy });
 
-  return { telemetry: telemetryPayload, geofence, traffic, eta, occupancy };
+  return { telemetry: telemetryPayload, geofence, traffic, breakdown, eta, occupancy };
 }
 
 async function validateTelemetryInput({ busId, routeId, latitude, longitude, speedKmh, timestamp }) {
   const bus = await Bus.findOne({ busId });
   if (!bus) return { message: 'Bus not found', status: 404 };
-  if (bus.status === 'VEHICLE_DISABLED') return { message: 'Bus is not active', status: 409 };
   const route = await Route.findOne({ routeId });
   if (!route) return { message: 'Route not found', status: 404 };
   if (bus.routeId !== routeId) return { message: 'Bus is not assigned to this route', status: 400 };

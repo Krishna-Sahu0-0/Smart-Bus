@@ -1,11 +1,13 @@
 const express = require('express');
 const createController = require('../controllers/eposController');
 const createTelemetryController = require('../controllers/telemetryController');
+const createIncidentController = require('../controllers/incidentController');
 
 module.exports = (io) => {
   const router = express.Router();
   const controller = createController(io);
   const telemetryController = createTelemetryController(io);
+  const incidentController = createIncidentController(io);
   const handle = (action) => (req, res, next) => Promise.resolve(action(req, res, next)).catch(next);
   router.get('/buses', handle(controller.listBuses));
   router.get('/buses/:busId', handle(controller.getBus));
@@ -19,6 +21,10 @@ module.exports = (io) => {
   router.post('/passes/quick-count', handle(controller.quickCount));
   router.post('/telemetry', handle(telemetryController.createTelemetry));
   router.get('/telemetry/:busId', handle(telemetryController.listTelemetry));
+  router.post('/incidents/sos', handle(incidentController.reportSos));
+  router.get('/incidents', handle(incidentController.list));
+  router.get('/incidents/:incidentId', handle(incidentController.get));
+  router.post('/incidents/:incidentId/resolve', handle(incidentController.resolve));
   router.use((err, req, res, next) => { console.error(`API error: ${err.message}`); res.status(500).json({ success: false, message: 'Internal server error' }); });
   return router;
 };

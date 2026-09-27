@@ -9,11 +9,12 @@ const Stage = require('../models/Stage');
 const Ticket = require('../models/Ticket');
 const Pass = require('../models/Pass');
 const Telemetry = require('../models/Telemetry');
+const Incident = require('../models/Incident');
 
 async function seed() {
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is not configured');
   await mongoose.connect(process.env.MONGODB_URI);
-  await Promise.all([User.deleteMany({}), Bus.deleteMany({}), Route.deleteMany({}), Stage.deleteMany({}), Ticket.deleteMany({}), Pass.deleteMany({}), Telemetry.deleteMany({})]);
+  await Promise.all([User.deleteMany({}), Bus.deleteMany({}), Route.deleteMany({}), Stage.deleteMany({}), Ticket.deleteMany({}), Pass.deleteMany({}), Telemetry.deleteMany({}), Incident.deleteMany({})]);
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'stages.json'), 'utf8'));
   const stages = await Stage.insertMany(data.stages.map((stage) => ({ ...stage, active: true })));
   const route = await Route.create({ routeId: data.routeId, routeName: 'Vijayawada to Guntur Demo Route', stageIds: stages.map((stage) => stage._id), active: true });
