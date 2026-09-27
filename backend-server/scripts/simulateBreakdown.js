@@ -48,11 +48,14 @@ async function run() {
   const sosResolved = await resolveIncident({ io, incident: sos.incident });
 
   await prepare();
-  await send(at(base, 0), 3);
-  await send(at(base, 9), 2);
-  const timeoutResult = await send(at(base, 10, 1), 2);
+  await send(at(base, 0), 0);
+  const exactTimeoutResult = await send(at(base, 15), 0);
+  const timeoutResult = await send(at(base, 15, 1), 0);
   const automaticOpen = await Incident.find({ busId, category: 'STATIONARY_TIMEOUT', status: 'OPEN' }).lean();
-  const timeoutDetected = timeoutResult.breakdown.triggered && automaticOpen.length === 1 && bus.status === 'VEHICLE_DISABLED';
+  const timeoutDetected = !exactTimeoutResult.breakdown.triggered
+    && timeoutResult.breakdown.triggered
+    && automaticOpen.length === 1
+    && bus.status === 'VEHICLE_DISABLED';
   await resolveIncident({ io, incident: await Incident.findOne({ incidentId: automaticOpen[0].incidentId }) });
 
   await prepare({ latitude: stages[0].latitude, longitude: stages[0].longitude });
@@ -61,10 +64,10 @@ async function run() {
   const stageExcluded = (await Incident.countDocuments({ busId, category: 'STATIONARY_TIMEOUT', status: 'OPEN' })) === 0 && bus.status === 'OPERATIONAL';
 
   await prepare();
-  await send(at(base, 25), 2);
-  await send(at(base, 30), 10);
-  await send(at(base, 31), 2);
-  await send(at(base, 40), 2);
+  await send(at(base, 25), 0);
+  await send(at(base, 30), 1);
+  await send(at(base, 40), 0);
+  await send(at(base, 55), 0);
   const movementReset = (await Incident.countDocuments({ busId, category: 'STATIONARY_TIMEOUT', status: 'OPEN' })) === 0 && bus.status !== 'VEHICLE_DISABLED';
 
   await prepare();
@@ -75,9 +78,10 @@ async function run() {
   const duplicateCheck = duplicate.duplicate === true;
 
   const result = {
+    stationarySpeedKmh: 0,
     stationaryTimeoutMinutes: STATIONARY_TIMEOUT_MS / 60000,
     sos: { openAndDisabled: sosOpen, resolved: sosResolved.incident.status === 'RESOLVED' },
-    stationaryTimeout: { detected: timeoutDetected, openIncidentCount: automaticOpen.length },
+    stationaryTimeout: { exactFifteenMinutesNoBreakdown: !exactTimeoutResult.breakdown.triggered, beyondFifteenMinutesDetected: timeoutDetected, openIncidentCount: automaticOpen.length },
     stageExclusion: stageExcluded,
     movementReset,
     resolution: resolutionCheck,

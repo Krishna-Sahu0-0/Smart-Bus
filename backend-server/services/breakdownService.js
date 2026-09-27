@@ -3,8 +3,8 @@ const Bus = require('../models/Bus');
 const Incident = require('../models/Incident');
 const { resetTrafficState } = require('./trafficService');
 
-const STATIONARY_SPEED_THRESHOLD_KMH = 5;
-const STATIONARY_TIMEOUT_MS = (Number(process.env.STATIONARY_TIMEOUT_MINUTES) || 10) * 60 * 1000;
+const STATIONARY_SPEED_THRESHOLD_KMH = 0;
+const STATIONARY_TIMEOUT_MS = (Number(process.env.STATIONARY_TIMEOUT_MINUTES) || 15) * 60 * 1000;
 const runtimeStates = new Map();
 
 function incidentId() {
@@ -56,7 +56,7 @@ async function reportIncident({ io, bus, routeId, conductorId, category, descrip
 
 async function processStationaryBreakdown({ io, bus, routeId, speedKmh, timestamp, insideGeofence }) {
   const state = runtimeStates.get(bus.busId) || { stationarySince: null };
-  const stationaryOutsideStage = speedKmh < STATIONARY_SPEED_THRESHOLD_KMH && !insideGeofence;
+  const stationaryOutsideStage = speedKmh === STATIONARY_SPEED_THRESHOLD_KMH && !insideGeofence;
   if (bus.status === 'VEHICLE_DISABLED') {
     resetStationaryState(bus.busId);
     return { triggered: false, stationarySince: null, elapsedSeconds: 0 };
@@ -80,7 +80,7 @@ async function processStationaryBreakdown({ io, bus, routeId, speedKmh, timestam
     bus,
     routeId,
     category: 'STATIONARY_TIMEOUT',
-    description: 'Bus remained below the stationary speed threshold outside a stage geofence.',
+    description: 'Bus remained at zero speed outside a stage geofence beyond the stationary timeout.',
     latitude: bus.currentLatitude,
     longitude: bus.currentLongitude,
     stationarySince: state.stationarySince,
