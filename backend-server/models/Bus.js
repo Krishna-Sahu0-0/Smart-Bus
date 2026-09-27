@@ -5,7 +5,7 @@ const busSchema = new mongoose.Schema({
   registrationNumber: { type: String, required: true, trim: true },
   routeId: { type: String, required: true, index: true },
   capacity: { type: Number, default: 40, min: 1 },
-  status: { type: String, enum: ['OPERATIONAL', 'MAINTENANCE', 'INACTIVE'], default: 'OPERATIONAL' },
+  status: { type: String, enum: ['OPERATIONAL', 'TRAFFIC_DELAY', 'VEHICLE_DISABLED'], default: 'OPERATIONAL' },
   currentLatitude: Number,
   currentLongitude: Number,
   currentSpeedKmh: { type: Number, default: 0, min: 0 },
