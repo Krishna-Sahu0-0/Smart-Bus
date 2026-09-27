@@ -9,7 +9,7 @@ import { apiService } from '../services/apiService';
 import { colors, DEMO_BUS_ID, DEMO_ROUTE_ID, PAYMENT_TYPES } from '../utils/constants';
 import { validateJourney } from '../utils/validators';
 
-export default function TicketingScreen({ navigation }) {
+export default function TicketingScreen({ navigation, route }) {
   const [bus, setBus] = useState(null);
   const [occupancy, setOccupancy] = useState(null);
   const [stages, setStages] = useState([]);
@@ -30,6 +30,15 @@ export default function TicketingScreen({ navigation }) {
   }
 
   useEffect(() => { refresh(); }, []);
+
+  useEffect(() => {
+    const passResult = route.params?.passResult;
+    if (!passResult) return;
+    setResult({ kind: 'pass', ticket: passResult.ticket, occupancy: passResult.occupancy });
+    setOccupancy(passResult.occupancy);
+    setBus((current) => ({ ...current, occupancy: passResult.occupancy.occupancy, availableSeats: passResult.occupancy.availableSeats }));
+    navigation.setParams({ passResult: null });
+  }, [navigation, route.params?.passResult]);
 
   const fare = Number(fareText);
   const journeyError = useMemo(() => validateJourney(origin, destination, passengerCount, fare), [origin, destination, passengerCount, fare]);
@@ -54,6 +63,11 @@ export default function TicketingScreen({ navigation }) {
     try { const response = await apiService.createQuickPassCount({ busId: DEMO_BUS_ID, routeId: DEMO_ROUTE_ID, fromStage: quickOrigin.stageId, toStage: quickDestination.stageId, passengerCount }); setResult({ kind: 'quick', ticket: response.ticket, occupancy: response.occupancy }); setOccupancy(response.occupancy); setBus((current) => ({ ...current, occupancy: response.occupancy.occupancy, availableSeats: response.occupancy.availableSeats })); } catch (requestError) { setError(requestError.message); } finally { setBusy(false); }
   }
 
+  function openScanner() {
+    if (!origin || !destination) return setError('Select an origin and destination before scanning.');
+    navigation.navigate('QRScanner', { journey: { fromStage: origin.stageId, toStage: destination.stageId } });
+  }
+
   return <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
     <View style={styles.topbar}><Header title="TICKETING" subtitle={`${DEMO_BUS_ID} · ${DEMO_ROUTE_ID}`} /><ConnectionStatus online={online} /></View>
     {vehicleDisabled ? <View style={styles.disabledBanner}><Text style={styles.disabledTitle}>VEHICLE DISABLED</Text><Text style={styles.disabledText}>Ticketing is paused until the backend clears the incident.</Text></View> : null}
@@ -67,8 +81,9 @@ export default function TicketingScreen({ navigation }) {
     {journeyError ? <Text style={styles.hint}>{journeyError}</Text> : null}
     {error ? <Text style={styles.error}>{error}</Text> : null}
     <PrimaryButton label={busy ? 'PROCESSING…' : 'CREATE TICKET'} onPress={submitTicket} disabled={!canSubmit} />
+    <PrimaryButton label="SCAN QR PASS" onPress={openScanner} disabled={loading || !online || vehicleDisabled || !origin || !destination} />
     <View style={styles.quickPanel}><Text style={styles.quickTitle}>1-TAP PASS COUNTER</Text><Text style={styles.quickText}>Uses the selected journey and records a zero-fare quick passenger count.</Text><PrimaryButton label={busy ? 'PROCESSING…' : 'ADD PASSENGERS'} onPress={submitQuickCount} disabled={busy || !online || loading || vehicleDisabled || !origin || !destination} /></View>
-    {result ? <View style={styles.success}><Text style={styles.successTitle}>{result.kind === 'ticket' ? 'TICKET CREATED' : 'PASS COUNT RECORDED'}</Text><Text style={styles.successLine}>Ticket ID: {result.ticket.ticketId}</Text><Text style={styles.successLine}>Passengers: {result.ticket.passengerCount} · Fare: {result.ticket.fareCharged}</Text><Text style={styles.successLine}>Type: {result.ticket.ticketType}</Text><OccupancyCard occupancy={result.occupancy} /></View> : null}
+    {result ? <View style={styles.success}><Text style={styles.successTitle}>{result.kind === 'ticket' ? 'TICKET CREATED' : result.kind === 'pass' ? 'PASS ACCEPTED' : 'PASS COUNT RECORDED'}</Text><Text style={styles.successLine}>Ticket ID: {result.ticket.ticketId}</Text><Text style={styles.successLine}>Passengers: {result.ticket.passengerCount} · Fare: {result.ticket.fareCharged}</Text><Text style={styles.successLine}>Type: {result.ticket.ticketType}</Text><OccupancyCard occupancy={result.occupancy} /></View> : null}
     <OccupancyCard occupancy={occupancy} />
   </ScrollView>;
 }

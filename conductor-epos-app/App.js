@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import LoginScreen from './src/screens/LoginScreen';
 import EposShellScreen from './src/screens/EposShellScreen';
 import TicketingScreen from './src/screens/TicketingScreen';
+import QRScannerScreen from './src/screens/QRScannerScreen';
 import { getSession } from './src/services/authService';
 import { colors } from './src/utils/constants';
 
@@ -34,6 +35,7 @@ export default function App() {
           {(props) => <EposShellScreen {...props} session={session} onLogout={() => setSession(null)} />}
         </Stack.Screen>
         <Stack.Screen name="Ticketing" component={TicketingScreen} />
+        <Stack.Screen name="QRScanner" component={QRScannerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
