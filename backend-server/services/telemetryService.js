@@ -5,6 +5,8 @@ const Ticket = require('../models/Ticket');
 const Telemetry = require('../models/Telemetry');
 const { processGeofence } = require('./geofenceService');
 const { recalculateAndSave } = require('./occupancyService');
+const { processTraffic } = require('./trafficService');
+const { calculateEta } = require('./etaService');
 
 async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKmh, timestamp }) {
   const telemetry = await Telemetry.create({ busId: bus.busId, routeId, latitude, longitude, speedKmh, timestamp });
@@ -25,6 +27,8 @@ async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKm
     geofence.expiredTicketCount = expiredTicketCount;
   }
 
+  const traffic = processTraffic({ bus, speedKmh, timestamp, insideGeofence: geofence.insideGeofence });
+  const eta = await calculateEta(bus);
   await bus.save();
   const occupancy = await recalculateAndSave(bus);
   const telemetryPayload = {
@@ -45,9 +49,23 @@ async function processTelemetry({ io, bus, routeId, latitude, longitude, speedKm
       timestamp: telemetry.timestamp,
     });
   }
+  if (traffic.statusChanged && traffic.status === 'TRAFFIC_DELAY') {
+    io.emit('TRAFFIC_DELAY', {
+      busId: bus.busId,
+      routeId,
+      status: traffic.status,
+      speedKmh,
+      ewmaSpeedKmh: traffic.ewmaSpeedKmh,
+      delayMinutes: eta.trafficDelayMinutes,
+      timestamp: telemetry.timestamp,
+    });
+  } else if (traffic.statusChanged && traffic.status === 'OPERATIONAL') {
+    io.emit('SERVICE_STATUS', { busId: bus.busId, routeId, status: 'OPERATIONAL', timestamp: telemetry.timestamp });
+  }
+  io.emit('ETA_UPDATE', { busId: bus.busId, ...eta });
   io.emit('OCCUPANCY_UPDATE', { busId: bus.busId, ...occupancy });
 
-  return { telemetry: telemetryPayload, geofence, occupancy };
+  return { telemetry: telemetryPayload, geofence, traffic, eta, occupancy };
 }
 
 async function validateTelemetryInput({ busId, routeId, latitude, longitude, speedKmh, timestamp }) {
@@ -62,6 +80,8 @@ async function validateTelemetryInput({ busId, routeId, latitude, longitude, spe
   if (!Number.isFinite(speedKmh) || speedKmh < 0) return { message: 'speedKmh must be a non-negative number' };
   const parsedTimestamp = new Date(timestamp);
   if (!timestamp || Number.isNaN(parsedTimestamp.getTime())) return { message: 'timestamp must be a valid date' };
+  const latestTelemetry = await Telemetry.findOne({ busId }).sort({ timestamp: -1 }).lean();
+  if (latestTelemetry && parsedTimestamp <= latestTelemetry.timestamp) return { message: 'timestamp must be newer than the latest telemetry', status: 409 };
   return { bus, route, timestamp: parsedTimestamp };
 }
 

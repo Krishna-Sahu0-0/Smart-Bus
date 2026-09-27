@@ -13,6 +13,7 @@ module.exports = (io) => {
   router.get('/routes/:routeId', handle(controller.getRoute));
   router.get('/stages/:routeId', handle(controller.listStages));
   router.get('/buses/:busId/occupancy', handle(controller.getOccupancy));
+  router.get('/buses/:busId/eta', handle(telemetryController.getEta));
   router.post('/tickets', handle(controller.createTicket));
   router.post('/passes/scan', handle(controller.scanPass));
   router.post('/passes/quick-count', handle(controller.quickCount));

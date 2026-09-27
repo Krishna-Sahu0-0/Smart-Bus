@@ -22,12 +22,14 @@ async function detectStage(bus, latitude, longitude) {
 
 async function processGeofence(bus, latitude, longitude) {
   const stage = await detectStage(bus, latitude, longitude);
-  if (!stage || stage.stageId === bus.currentStageId) return { stageArrived: false };
+  if (!stage) return { stageArrived: false, insideGeofence: false };
+  if (stage.stageId === bus.currentStageId) return { stageArrived: false, insideGeofence: true };
 
   const currentStage = await Stage.findOne({ stageId: bus.currentStageId, routeId: bus.routeId }).lean();
-  if (currentStage && stage.sequence < currentStage.sequence) return { stageArrived: false };
+  if (currentStage && stage.sequence < currentStage.sequence) return { stageArrived: false, insideGeofence: false };
   return {
     stageArrived: true,
+    insideGeofence: true,
     stage: { stageId: stage.stageId, stageName: stage.stageName, sequence: stage.sequence },
   };
 }

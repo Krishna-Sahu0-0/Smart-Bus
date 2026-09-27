@@ -13,6 +13,8 @@ const busSchema = new mongoose.Schema({
   occupancy: { type: Number, default: 0, min: 0 },
   availableSeats: { type: Number, default: 40, min: 0 },
   lastTelemetryAt: Date,
+  trafficDelaySince: Date,
+  ewmaSpeedKmh: { type: Number, min: 0 },
 });
 
 module.exports = mongoose.model('Bus', busSchema);

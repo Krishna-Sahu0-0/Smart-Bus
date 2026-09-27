@@ -1,5 +1,7 @@
 const Telemetry = require('../models/Telemetry');
+const Bus = require('../models/Bus');
 const { processTelemetry, validateTelemetryInput } = require('../services/telemetryService');
+const { calculateEta } = require('../services/etaService');
 
 const error = (res, message, status = 400) => res.status(status).json({ success: false, message });
 
@@ -24,6 +26,11 @@ function createTelemetryController(io) {
       const limit = Number.isInteger(limitValue) && limitValue > 0 ? Math.min(limitValue, 100) : 50;
       const telemetry = await Telemetry.find({ busId: req.params.busId }).sort({ timestamp: -1 }).limit(limit).lean();
       return res.json({ success: true, telemetry });
+    },
+    getEta: async (req, res) => {
+      const bus = await Bus.findOne({ busId: req.params.busId });
+      if (!bus) return error(res, 'Bus not found', 404);
+      return res.json({ success: true, eta: await calculateEta(bus) });
     },
   };
 }
