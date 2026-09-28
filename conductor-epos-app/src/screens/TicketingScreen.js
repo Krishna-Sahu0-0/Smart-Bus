@@ -8,6 +8,7 @@ import OccupancyCard from '../components/OccupancyCard';
 import { apiService } from '../services/apiService';
 import { colors, DEMO_BUS_ID, DEMO_ROUTE_ID, PAYMENT_TYPES } from '../utils/constants';
 import { validateJourney } from '../utils/validators';
+import { useEposRealtime } from '../context/EposRealtimeContext';
 
 export default function TicketingScreen({ navigation, route }) {
   const [bus, setBus] = useState(null);
@@ -23,6 +24,7 @@ export default function TicketingScreen({ navigation, route }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState(null);
+  const { realtimeStatus, occupancy: liveOccupancy, serviceStatus, breakdownAlert } = useEposRealtime();
 
   async function refresh() {
     setLoading(true); setError('');
@@ -39,6 +41,16 @@ export default function TicketingScreen({ navigation, route }) {
     setBus((current) => ({ ...current, occupancy: passResult.occupancy.occupancy, availableSeats: passResult.occupancy.availableSeats }));
     navigation.setParams({ passResult: null });
   }, [navigation, route.params?.passResult]);
+
+  useEffect(() => {
+    if (!liveOccupancy) return;
+    setOccupancy(liveOccupancy);
+    setBus((current) => current ? { ...current, occupancy: liveOccupancy.occupancy, availableSeats: liveOccupancy.availableSeats } : current);
+  }, [liveOccupancy]);
+
+  useEffect(() => {
+    if (serviceStatus?.status) setBus((current) => current ? { ...current, status: serviceStatus.status } : current);
+  }, [serviceStatus]);
 
   const fare = Number(fareText);
   const journeyError = useMemo(() => validateJourney(origin, destination, passengerCount, fare), [origin, destination, passengerCount, fare]);
@@ -69,7 +81,8 @@ export default function TicketingScreen({ navigation, route }) {
   }
 
   return <ScrollView style={styles.screen} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-    <View style={styles.topbar}><Header title="TICKETING" subtitle={`${DEMO_BUS_ID} · ${DEMO_ROUTE_ID}`} /><ConnectionStatus online={online} /></View>
+    <View style={styles.topbar}><Header title="TICKETING" subtitle={`${DEMO_BUS_ID} · ${DEMO_ROUTE_ID}`} /><View style={styles.connectionGroup}><ConnectionStatus online={online} /><ConnectionStatus online={realtimeStatus === 'LIVE'} status={realtimeStatus} /></View></View>
+    {breakdownAlert ? <View style={styles.alertBanner}><Text style={styles.alertTitle}>BREAKDOWN ALERT</Text><Text style={styles.alertText}>{breakdownAlert.category || 'SERVICE INCIDENT'} · BACKEND ALERT ACTIVE</Text></View> : null}
     {vehicleDisabled ? <View style={styles.disabledBanner}><Text style={styles.disabledTitle}>VEHICLE DISABLED</Text><Text style={styles.disabledText}>Ticketing is paused until the backend clears the incident.</Text></View> : null}
     <Pressable onPress={() => navigation.goBack()}><Text style={styles.back}>‹ TERMINAL</Text></Pressable>
     {loading ? <ActivityIndicator color={colors.amber} size="large" /> : null}
@@ -90,4 +103,8 @@ export default function TicketingScreen({ navigation, route }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.ink }, content: { padding: 22, paddingTop: 62, gap: 16 }, topbar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }, back: { color: colors.amber, fontSize: 14, fontWeight: '900', letterSpacing: 1 }, group: { gap: 8 }, label: { color: colors.muted, fontSize: 12, fontWeight: '900', letterSpacing: 1.1 }, counter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: colors.panel, borderRadius: 8, padding: 8 }, counterButton: { width: 58, height: 52, borderRadius: 7, backgroundColor: colors.amber, alignItems: 'center', justifyContent: 'center' }, counterSymbol: { color: colors.ink, fontSize: 30, fontWeight: '900' }, count: { color: colors.white, fontSize: 30, fontWeight: '900' }, disabled: { opacity: 0.35 }, payments: { flexDirection: 'row', gap: 8 }, payment: { flex: 1, minHeight: 52, borderWidth: 1, borderColor: colors.line, borderRadius: 7, alignItems: 'center', justifyContent: 'center' }, paymentSelected: { backgroundColor: '#3A3322', borderColor: colors.amber }, paymentText: { color: colors.muted, fontWeight: '900' }, paymentSelectedText: { color: colors.amber }, input: { minHeight: 54, backgroundColor: colors.panel, borderColor: colors.line, borderWidth: 1, borderRadius: 7, color: colors.white, fontSize: 18, fontWeight: '800', paddingHorizontal: 14 }, hint: { color: colors.amber, fontWeight: '700' }, error: { color: colors.red, fontWeight: '800' }, disabledBanner: { backgroundColor: '#5A2025', borderRadius: 9, padding: 14, gap: 4 }, disabledTitle: { color: colors.red, fontSize: 16, fontWeight: '900' }, disabledText: { color: colors.white, fontSize: 13, fontWeight: '700' }, quickPanel: { borderWidth: 1, borderColor: colors.line, borderRadius: 9, padding: 16, gap: 10 }, quickTitle: { color: colors.amber, fontSize: 16, fontWeight: '900', letterSpacing: 1 }, quickText: { color: colors.muted, lineHeight: 19 }, success: { backgroundColor: '#173A2A', borderRadius: 9, padding: 16, gap: 7 }, successTitle: { color: colors.green, fontSize: 18, fontWeight: '900' }, successLine: { color: colors.white, fontSize: 14, fontWeight: '700' },
+  connectionGroup: { alignItems: 'flex-end', gap: 8 },
+  alertBanner: { backgroundColor: '#4A3820', borderRadius: 9, padding: 14, gap: 4 },
+  alertTitle: { color: colors.amber, fontSize: 16, fontWeight: '900' },
+  alertText: { color: colors.white, fontSize: 13, fontWeight: '700' },
 });
