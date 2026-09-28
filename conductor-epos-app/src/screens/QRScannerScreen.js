@@ -5,6 +5,8 @@ import Header from '../components/Header';
 import PrimaryButton from '../components/PrimaryButton';
 import { apiService } from '../services/apiService';
 import { colors, DEMO_BUS_ID, DEMO_ROUTE_ID } from '../utils/constants';
+import { enqueueTransaction, QUEUE_OPERATION_TYPES } from '../services/offlineQueueService';
+import { notifyQueueChanged } from '../services/syncService';
 
 function parsePassPayload(rawValue, journey) {
   let payload;
@@ -28,13 +30,21 @@ export default function QRScannerScreen({ navigation, route }) {
     if (scanLocked.current || processing) return;
     scanLocked.current = true;
     setProcessing(true); setError('');
+    let payload;
     try {
-      const response = await apiService.scanPass(parsePassPayload(data, journey));
+      payload = parsePassPayload(data, journey);
+      const response = await apiService.scanPass(payload);
       navigation.navigate('Ticketing', { passResult: response });
     } catch (scanError) {
-      setError(scanError.message);
-      setProcessing(false);
-      setTimeout(() => { scanLocked.current = false; }, 1200);
+      if (scanError.isNetworkError) {
+        const item = await enqueueTransaction(QUEUE_OPERATION_TYPES.PASS_SCAN, payload);
+        notifyQueueChanged();
+        navigation.navigate('Ticketing', { passResult: { kind: 'pending', operationType: QUEUE_OPERATION_TYPES.PASS_SCAN, localQueueId: item.localQueueId } });
+      } else {
+        setError(scanError.message);
+        setProcessing(false);
+        setTimeout(() => { scanLocked.current = false; }, 1200);
+      }
     }
   }
 

@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { DEMO_BUS_ID } from '../utils/constants';
 import { subscribeToSocket } from '../services/socketService';
+import { apiService } from '../services/apiService';
+import { configureSyncService, getSyncState, subscribeToSync, syncQueuedTransactions } from '../services/syncService';
 
 const EposRealtimeContext = createContext(null);
 
@@ -10,6 +12,8 @@ function belongsToDemoBus(payload) {
 
 export function EposRealtimeProvider({ session, children }) {
   const [realtimeStatus, setRealtimeStatus] = useState(session ? 'CONNECTING' : 'OFFLINE');
+  const [syncState, setSyncState] = useState(getSyncState());
+  const [lastSyncEvent, setLastSyncEvent] = useState(null);
   const [events, setEvents] = useState({
     telemetry: null,
     stageArrival: null,
@@ -26,6 +30,11 @@ export function EposRealtimeProvider({ session, children }) {
     }
 
     setRealtimeStatus('CONNECTING');
+    function handleRealtimeStatus(status) {
+      setRealtimeStatus(status);
+      if (status === 'LIVE') syncQueuedTransactions();
+    }
+
     return subscribeToSocket((event, payload) => {
       if (!belongsToDemoBus(payload)) return;
       setEvents((current) => {
@@ -38,10 +47,27 @@ export function EposRealtimeProvider({ session, children }) {
         if (event === 'BREAKDOWN_RESOLVED') return { ...current, breakdownAlert: null };
         return current;
       });
-    }, setRealtimeStatus);
+    }, handleRealtimeStatus);
   }, [session]);
 
-  const value = useMemo(() => ({ realtimeStatus, ...events }), [events, realtimeStatus]);
+  useEffect(() => {
+    if (!session) return undefined;
+    configureSyncService(apiService);
+    const unsubscribe = subscribeToSync((nextState, event) => {
+      setSyncState(nextState);
+      if (event) setLastSyncEvent(event);
+    });
+    syncQueuedTransactions();
+    return unsubscribe;
+  }, [session]);
+
+  const value = useMemo(() => ({
+    realtimeStatus,
+    syncState,
+    lastSyncEvent,
+    syncNow: syncQueuedTransactions,
+    ...events,
+  }), [events, lastSyncEvent, realtimeStatus, syncState]);
   return <EposRealtimeContext.Provider value={value}>{children}</EposRealtimeContext.Provider>;
 }
 

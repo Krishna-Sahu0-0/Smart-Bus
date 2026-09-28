@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Header from '../components/Header';
 import ConnectionStatus from '../components/ConnectionStatus';
 import SyncStatus from '../components/SyncStatus';
 import PrimaryButton from '../components/PrimaryButton';
 import { apiService } from '../services/apiService';
 import { logout } from '../services/authService';
-import { colors, DEMO_BUS_ID, DEMO_ROUTE_ID } from '../utils/constants';
+import { colors, DEMO_BUS_ID, DEMO_CONDUCTOR_ID, DEMO_ROUTE_ID } from '../utils/constants';
 import { requestForegroundLocation, startForegroundTracking, toTelemetryPosition } from '../services/locationService';
 import { useEposRealtime } from '../context/EposRealtimeContext';
+
+const SOS_CATEGORIES = [
+  { label: 'TYRE PUNCTURE', value: 'TYRE_PUNCTURE' },
+  { label: 'MECHANICAL BREAKDOWN', value: 'ENGINE_FAILURE' },
+  { label: 'ENGINE OVERHEATING', value: 'ENGINE_FAILURE' },
+  { label: 'ROAD ACCIDENT', value: 'ACCIDENT' },
+];
 
 export default function EposShellScreen({ navigation, session, onLogout }) {
   const [bus, setBus] = useState(null);
@@ -22,8 +29,13 @@ export default function EposShellScreen({ navigation, session, onLogout }) {
   const [permissionCanAskAgain, setPermissionCanAskAgain] = useState(true);
   const [gpsRetry, setGpsRetry] = useState(0);
   const [eta, setEta] = useState(null);
+  const [sosVisible, setSosVisible] = useState(false);
+  const [sosCategory, setSosCategory] = useState(SOS_CATEGORIES[0]);
+  const [sosBusy, setSosBusy] = useState(false);
+  const [sosError, setSosError] = useState('');
+  const [sosResult, setSosResult] = useState(null);
   const watcherStop = useRef(null);
-  const { realtimeStatus, telemetry, stageArrival, occupancy: liveOccupancy, eta: liveEta, serviceStatus, breakdownAlert } = useEposRealtime();
+  const { realtimeStatus, telemetry, stageArrival, occupancy: liveOccupancy, eta: liveEta, serviceStatus, breakdownAlert, syncState, syncNow } = useEposRealtime();
 
   useEffect(() => {
     let active = true;
@@ -92,21 +104,47 @@ export default function EposShellScreen({ navigation, session, onLogout }) {
 
   async function signOut() { await logout(); onLogout(); navigation.replace('Login'); }
 
+  async function submitSos() {
+    const latitude = gpsPosition?.latitude ?? bus?.currentLatitude;
+    const longitude = gpsPosition?.longitude ?? bus?.currentLongitude;
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      setSosError('Current location is required before reporting SOS.');
+      return;
+    }
+    setSosBusy(true); setSosError('');
+    try {
+      const response = await apiService.reportSos({ busId: DEMO_BUS_ID, routeId: DEMO_ROUTE_ID, conductorId: session?.staffId || DEMO_CONDUCTOR_ID, category: sosCategory.value, description: sosCategory.label, latitude, longitude });
+      const busResponse = await apiService.getBus(DEMO_BUS_ID);
+      setBus(busResponse.bus);
+      setSosResult(response.incident);
+      setSosVisible(false);
+    } catch (error) {
+      setSosError(error.message);
+    } finally {
+      setSosBusy(false);
+    }
+  }
+
   const currentStage = stages.find((stage) => stage.stageId === bus?.currentStageId);
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topbar}><Header title="E-POS TERMINAL" subtitle={`CONDUCTOR · ${session?.staffId || 'DEMO'}`} /><View style={styles.connectionGroup}><ConnectionStatus online={online} /><ConnectionStatus online={realtimeStatus === 'LIVE'} status={realtimeStatus} /></View></View>
-      <View style={styles.statusbar}><SyncStatus /><Pressable onPress={signOut}><Text style={styles.signout}>SIGN OUT</Text></Pressable></View>
+      <View style={styles.statusbar}><SyncStatus status={syncState.status} pendingCount={syncState.pendingCount} onSyncNow={syncNow} /><Pressable onPress={signOut}><Text style={styles.signout}>SIGN OUT</Text></Pressable></View>
       <View style={styles.identity}><Text style={styles.label}>BUS</Text><Text style={styles.value}>{bus?.busId || DEMO_BUS_ID}</Text><Text style={styles.label}>ROUTE</Text><Text style={styles.value}>{bus?.routeId || DEMO_ROUTE_ID}</Text><Text style={styles.label}>CURRENT STAGE</Text><Text style={styles.value}>{currentStage?.stageName || bus?.currentStageId || 'UNAVAILABLE'}</Text></View>
       {bus?.status === 'VEHICLE_DISABLED' ? <View style={styles.disabledBanner}><Text style={styles.disabledTitle}>VEHICLE DISABLED</Text><Text style={styles.disabledText}>Ticketing is paused until the backend clears the incident.</Text></View> : null}
       {breakdownAlert ? <View style={styles.alertBanner}><Text style={styles.alertTitle}>BREAKDOWN ALERT</Text><Text style={styles.alertText}>{breakdownAlert.category || 'SERVICE INCIDENT'} · BACKEND ALERT ACTIVE</Text></View> : null}
+      {sosResult ? <View style={styles.sosResult}><Text style={styles.disabledTitle}>SOS REPORTED</Text><Text style={styles.telemetryLine}>INCIDENT: {sosResult.incidentId}</Text><Text style={styles.telemetryLine}>CATEGORY: {sosResult.category}</Text><Text style={styles.telemetryLine}>STATUS: {sosResult.status}</Text></View> : null}
       {loading ? <ActivityIndicator color={colors.amber} size="large" /> : null}
       <View style={styles.metrics}><View><Text style={styles.label}>OCCUPANCY</Text><Text style={styles.metric}>{bus?.occupancy ?? '—'}</Text></View><View><Text style={styles.label}>AVAILABLE SEATS</Text><Text style={styles.metric}>{bus?.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>SERVICE</Text><Text style={[styles.metric, bus?.status === 'VEHICLE_DISABLED' && { color: colors.red }]}>{bus?.status || 'UNKNOWN'}</Text></View></View>
       <View style={styles.telemetry}><View style={styles.telemetryHeading}><Text style={styles.telemetryTitle}>GPS / TELEMETRY</Text><Text style={[styles.gpsStatus, gpsStatus === 'ENABLED' ? styles.enabled : styles.disabled]}>{gpsStatus}</Text></View><Text style={styles.telemetryLine}>LATITUDE: {gpsPosition?.latitude?.toFixed(6) || '—'}</Text><Text style={styles.telemetryLine}>LONGITUDE: {gpsPosition?.longitude?.toFixed(6) || '—'}</Text><Text style={styles.telemetryLine}>SPEED: {gpsPosition ? `${gpsPosition.speedKmh.toFixed(1)} km/h${gpsPosition.speedAvailable ? '' : ' · device speed unavailable'}` : '—'}</Text><Text style={styles.telemetryLine}>LAST SENT: {lastTelemetrySent ? new Date(lastTelemetrySent).toLocaleTimeString() : '—'}</Text>{telemetryError ? <Text style={styles.telemetryError}>{telemetryError}</Text> : null}{gpsStatus === 'PERMISSION REQUIRED' && permissionCanAskAgain ? <Pressable onPress={() => setGpsRetry((value) => value + 1)}><Text style={styles.settings}>REQUEST LOCATION PERMISSION</Text></Pressable> : null}{gpsStatus === 'DISABLED' || (gpsStatus === 'PERMISSION REQUIRED' && !permissionCanAskAgain) ? <Pressable onPress={Linking.openSettings}><Text style={styles.settings}>OPEN LOCATION SETTINGS</Text></Pressable> : null}</View>
       <View style={styles.liveState}><Text style={styles.label}>BACKEND STATE</Text><Text style={styles.telemetryLine}>CURRENT STAGE: {currentStage?.stageName || bus?.currentStageId || 'UNAVAILABLE'}</Text><Text style={styles.telemetryLine}>SERVICE: {bus?.status || 'UNKNOWN'}</Text><Text style={styles.telemetryLine}>ETA: {eta?.etaAvailable ? `${eta.etaMinutes} min` : 'UNAVAILABLE'}</Text></View>
+      <PrimaryButton label="REPORT SOS" onPress={() => { setSosError(''); setSosVisible(true); }} tone="red" disabled={bus?.status === 'VEHICLE_DISABLED'} />
       <PrimaryButton label="OPEN TICKETING" onPress={() => navigation.navigate('Ticketing')} disabled={!online || bus?.status === 'VEHICLE_DISABLED'} />
       <View style={styles.coming}><Text style={styles.comingTitle}>TERMINAL READY</Text><Text style={styles.comingText}>Ticketing controls will be added after this launch milestone is verified on Expo Go.</Text></View>
       <PrimaryButton label="SIGN OUT" onPress={signOut} tone="red" />
+      <Modal visible={sosVisible} transparent animationType="fade" onRequestClose={() => setSosVisible(false)}>
+        <View style={styles.modalBackdrop}><View style={styles.modalCard}><Text style={styles.modalTitle}>REPORT SOS</Text><Text style={styles.modalText}>This reports a backend incident and may disable the vehicle. Confirm only when assistance is required.</Text><Text style={styles.label}>INCIDENT CATEGORY</Text>{SOS_CATEGORIES.map((category) => <Pressable key={category.label} onPress={() => setSosCategory(category)} style={[styles.categoryButton, sosCategory.label === category.label && styles.categorySelected]}><Text style={[styles.categoryText, sosCategory.label === category.label && styles.categorySelectedText]}>{category.label}</Text></Pressable>)}{sosError ? <Text style={styles.telemetryError}>{sosError}</Text> : null}<PrimaryButton label={sosBusy ? 'REPORTING…' : 'CONFIRM REPORT'} onPress={submitSos} disabled={sosBusy} tone="red" /><PrimaryButton label="CANCEL" onPress={() => setSosVisible(false)} /></View></View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -139,6 +177,15 @@ const styles = StyleSheet.create({
   alertBanner: { backgroundColor: '#4A3820', borderRadius: 9, padding: 14, gap: 4 },
   alertTitle: { color: colors.amber, fontSize: 16, fontWeight: '900' },
   alertText: { color: colors.white, fontSize: 13, fontWeight: '700' },
+  sosResult: { backgroundColor: '#5A2025', borderRadius: 9, padding: 16, gap: 7 },
+  modalBackdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.75)', justifyContent: 'center', padding: 22 },
+  modalCard: { backgroundColor: colors.panel, borderRadius: 10, padding: 20, gap: 12 },
+  modalTitle: { color: colors.red, fontSize: 22, fontWeight: '900', letterSpacing: 1 },
+  modalText: { color: colors.white, fontSize: 14, lineHeight: 20 },
+  categoryButton: { minHeight: 48, borderWidth: 1, borderColor: colors.line, borderRadius: 7, justifyContent: 'center', paddingHorizontal: 14 },
+  categorySelected: { backgroundColor: '#5A2025', borderColor: colors.red },
+  categoryText: { color: colors.white, fontSize: 13, fontWeight: '900' },
+  categorySelectedText: { color: colors.red },
   coming: { borderWidth: 1, borderColor: colors.line, borderRadius: 10, padding: 18, gap: 8 },
   comingTitle: { color: colors.amber, fontSize: 15, fontWeight: '900', letterSpacing: 1 },
   comingText: { color: colors.muted, fontSize: 14, lineHeight: 21 },
