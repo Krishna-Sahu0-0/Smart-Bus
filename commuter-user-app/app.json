@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "SmartBus",
+    "slug": "smartbus-commuter",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#F4F7F8"
+    },
+    "android": {
+      "package": "com.smartbus.commuter"
+    }
+  }
+}
