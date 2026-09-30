@@ -8,8 +8,8 @@ const Ticket = require('../models/Ticket');
 const { processTelemetry } = require('../services/telemetryService');
 const { recalculateAndSave } = require('../services/occupancyService');
 
-const busId = 'AP11Z1234';
-const routeId = 'R-VJA-GNT-01';
+const busId = 'AP30Z1234';
+const routeId = 'R-SKLM-SMP-01';
 const ticketId = () => `SIM-${Date.now()}-${crypto.randomBytes(3).toString('hex')}`;
 
 async function run() {
@@ -18,7 +18,7 @@ async function run() {
   const bus = await Bus.findOne({ busId });
   const route = await Route.findOne({ routeId });
   const stages = await Stage.find({ routeId, active: true }).sort({ sequence: 1 }).lean();
-  if (!bus || !route || stages.length < 4) throw new Error('Demo bus, route, or stages are missing');
+  if (!bus || !route || stages.length < 5) throw new Error('Srikakulam demo bus, route, or stages are missing');
 
   await Ticket.updateMany({ busId, status: 'ACTIVE' }, { $set: { status: 'CANCELLED' } });
   bus.currentStageId = stages[0].stageId;
@@ -26,8 +26,8 @@ async function run() {
   bus.currentLongitude = stages[0].longitude;
   await recalculateAndSave(bus);
   await Ticket.create([
-    { ticketId: ticketId(), busId, routeId, ticketType: 'CASH', fromStage: stages[0].stageId, toStage: stages[2].stageId, fromSequence: stages[0].sequence, toSequence: stages[2].sequence, passengerCount: 2, fareCharged: 100, status: 'ACTIVE' },
-    { ticketId: ticketId(), busId, routeId, ticketType: 'CASH', fromStage: stages[0].stageId, toStage: stages[3].stageId, fromSequence: stages[0].sequence, toSequence: stages[3].sequence, passengerCount: 1, fareCharged: 50, status: 'ACTIVE' },
+    { ticketId: ticketId(), busId, routeId, ticketType: 'CASH', fromStage: stages[0].stageId, toStage: stages[2].stageId, fromSequence: stages[0].sequence, toSequence: stages[2].sequence, passengerCount: 2, fareCharged: 140, status: 'ACTIVE' },
+    { ticketId: ticketId(), busId, routeId, ticketType: 'CASH', fromStage: stages[0].stageId, toStage: stages[3].stageId, fromSequence: stages[0].sequence, toSequence: stages[3].sequence, passengerCount: 1, fareCharged: 105, status: 'ACTIVE' },
   ]);
   await recalculateAndSave(bus);
 
