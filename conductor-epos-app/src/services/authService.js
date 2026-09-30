@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DEMO_CONDUCTOR_ID } from '../utils/constants';
+import { DEMO_CONDUCTOR_ID, DEMO_CONDUCTOR_PIN } from '../utils/constants';
 
 const SESSION_KEY = '@smartbus/conductor-session';
 
 export async function login(staffId, pin) {
-  // The backend has no authentication endpoint yet. This is a local demo session, not PIN verification.
-  if (staffId.trim() !== DEMO_CONDUCTOR_ID || !pin.trim()) throw new Error('Use the configured demo staff ID and a non-empty demo PIN.');
+  if (staffId.trim() !== DEMO_CONDUCTOR_ID || pin.trim() !== DEMO_CONDUCTOR_PIN) {
+    throw new Error('Invalid demo staff ID or PIN.');
+  }
   const session = { staffId: DEMO_CONDUCTOR_ID, role: 'CONDUCTOR', signedInAt: new Date().toISOString() };
   await AsyncStorage.setItem(SESSION_KEY, JSON.stringify(session));
   return session;
