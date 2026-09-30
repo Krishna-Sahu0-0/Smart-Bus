@@ -11,16 +11,18 @@ async function calculateOccupancy(bus) {
   const currentStage = await Stage.findOne({ stageId: bus.currentStageId, routeId: bus.routeId }).lean();
   const currentStageSequence = currentStage ? currentStage.sequence : 0;
   const tickets = await Ticket.find({ busId: bus.busId, status: 'ACTIVE' }).lean();
-  const occupancy = Math.max(0, Math.min(bus.capacity, tickets.reduce((total, ticket) => (
+  const capacity = 50;
+  const occupancy = Math.max(0, Math.min(capacity, tickets.reduce((total, ticket) => (
     ticket.fromSequence <= currentStageSequence && currentStageSequence < ticket.toSequence
       ? total + ticket.passengerCount : total
   ), 0)));
-  const availableSeats = Math.max(0, Math.min(bus.capacity, bus.capacity - occupancy));
-  return { occupancy, availableSeats, capacity: bus.capacity, ...classifySeats(availableSeats) };
+  const availableSeats = Math.max(0, Math.min(capacity, capacity - occupancy));
+  return { occupancy, availableSeats, capacity, ...classifySeats(availableSeats) };
 }
 
 async function recalculateAndSave(bus) {
   const result = await calculateOccupancy(bus);
+  bus.capacity = 50;
   bus.occupancy = result.occupancy;
   bus.availableSeats = result.availableSeats;
   await bus.save();
