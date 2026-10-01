@@ -10,7 +10,7 @@ const { resetTrafficState } = require('../services/trafficService');
 
 const busId = 'AP30Z1234';
 const routeId = 'R-SKLM-SMP-01';
-const conductorId = 'EMP-8842';
+const conductorId = 'EMP-1089';
 const outsidePosition = { latitude: 18.50, longitude: 84.10 };
 function at(base, minutes, milliseconds = 0) { return new Date(base.getTime() + minutes * 60 * 1000 + milliseconds); }
 

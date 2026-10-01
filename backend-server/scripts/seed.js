@@ -18,7 +18,7 @@ async function seed() {
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'stages.json'), 'utf8'));
   const stages = await Stage.insertMany(data.stages.map((stage) => ({ ...stage, active: true })));
   const route = await Route.create({ routeId: data.routeId, routeName: data.routeName, stageIds: stages.map((stage) => stage._id), active: true });
-  await User.create({ staffId: 'EMP-8842', name: 'Demo Conductor', role: 'CONDUCTOR', pin: '4521', active: true });
+  await User.create({ staffId: 'EMP-1089', name: 'Swapna Latha', role: 'CONDUCTOR', pin: '4289', active: true });
   await Bus.create({
     busId: data.bus.busId,
     registrationNumber: data.bus.registrationNumber,
