@@ -8,6 +8,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 const { Server } = require('socket.io');
 const apiRouter = require('./routes/api');
+const { resetFacultyDemoState } = require('./services/facultyDemoResetService');
 
 const routeConfig = JSON.parse(fs.readFileSync(path.join(__dirname, 'config', 'stages.json'), 'utf8'));
 const app = express();
@@ -71,6 +72,7 @@ async function connectDatabase() {
 
 async function startServer() {
   await connectDatabase();
+  if (databaseStatus === 'connected') await resetFacultyDemoState(routeConfig);
   httpServer.listen(port, '0.0.0.0', () => {
     console.log(`SmartBus Backend listening on http://localhost:${port}`);
     console.log(`LAN clients can use http://<LAPTOP-LAN-IP>:${port}`);
