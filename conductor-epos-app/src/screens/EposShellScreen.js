@@ -126,6 +126,7 @@ export default function EposShellScreen({ navigation, session, onLogout }) {
   }
 
   const currentStage = stages.find((stage) => stage.stageId === bus?.currentStageId);
+  const occupancyTone = bus?.occupancy > (bus?.capacity ?? 50) ? styles.overCapacity : bus?.occupancy >= 40 ? styles.nearCapacity : styles.normalCapacity;
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
       <View style={styles.topbar}><Header title="E-POS TERMINAL" subtitle={`CONDUCTOR · ${session?.staffId || 'DEMO'}`} /><View style={styles.connectionGroup}><ConnectionStatus online={online} /><ConnectionStatus online={realtimeStatus === 'LIVE'} status={realtimeStatus} /></View></View>
@@ -135,7 +136,7 @@ export default function EposShellScreen({ navigation, session, onLogout }) {
       {breakdownAlert ? <View style={styles.alertBanner}><Text style={styles.alertTitle}>BREAKDOWN ALERT</Text><Text style={styles.alertText}>{breakdownAlert.category || 'SERVICE INCIDENT'} · BACKEND ALERT ACTIVE</Text></View> : null}
       {sosResult ? <View style={styles.sosResult}><Text style={styles.disabledTitle}>SOS REPORTED</Text><Text style={styles.telemetryLine}>INCIDENT: {sosResult.incidentId}</Text><Text style={styles.telemetryLine}>CATEGORY: {sosResult.category}</Text><Text style={styles.telemetryLine}>STATUS: {sosResult.status}</Text></View> : null}
       {loading ? <ActivityIndicator color={colors.amber} size="large" /> : null}
-      <View style={styles.metrics}><View><Text style={styles.label}>OCCUPANCY</Text><Text style={styles.metric}>{bus?.occupancy ?? '—'}</Text></View><View><Text style={styles.label}>AVAILABLE SEATS</Text><Text style={styles.metric}>{bus?.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>SERVICE</Text><Text style={[styles.metric, bus?.status === 'VEHICLE_DISABLED' && { color: colors.red }]}>{bus?.status || 'UNKNOWN'}</Text></View></View>
+      <View style={styles.metrics}><View><Text style={styles.label}>OCCUPANCY</Text><Text style={[styles.metric, occupancyTone]}>{bus?.occupancy ?? '—'} / {bus?.capacity ?? 50}</Text></View><View><Text style={styles.label}>AVAILABLE SEATS</Text><Text style={styles.metric}>{bus?.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>SERVICE</Text><Text style={[styles.metric, bus?.status === 'VEHICLE_DISABLED' && { color: colors.red }]}>{bus?.status || 'UNKNOWN'}</Text></View></View>
       <View style={styles.telemetry}><View style={styles.telemetryHeading}><Text style={styles.telemetryTitle}>GPS / TELEMETRY</Text><Text style={[styles.gpsStatus, gpsStatus === 'ENABLED' ? styles.enabled : styles.disabled]}>{gpsStatus}</Text></View><Text style={styles.telemetryLine}>LATITUDE: {gpsPosition?.latitude?.toFixed(6) || '—'}</Text><Text style={styles.telemetryLine}>LONGITUDE: {gpsPosition?.longitude?.toFixed(6) || '—'}</Text><Text style={styles.telemetryLine}>SPEED: {gpsPosition ? `${gpsPosition.speedKmh.toFixed(1)} km/h${gpsPosition.speedAvailable ? '' : ' · device speed unavailable'}` : '—'}</Text><Text style={styles.telemetryLine}>LAST SENT: {lastTelemetrySent ? new Date(lastTelemetrySent).toLocaleTimeString() : '—'}</Text>{telemetryError ? <Text style={styles.telemetryError}>{telemetryError}</Text> : null}{gpsStatus === 'PERMISSION REQUIRED' && permissionCanAskAgain ? <Pressable onPress={() => setGpsRetry((value) => value + 1)}><Text style={styles.settings}>REQUEST LOCATION PERMISSION</Text></Pressable> : null}{gpsStatus === 'DISABLED' || (gpsStatus === 'PERMISSION REQUIRED' && !permissionCanAskAgain) ? <Pressable onPress={Linking.openSettings}><Text style={styles.settings}>OPEN LOCATION SETTINGS</Text></Pressable> : null}</View>
       <View style={styles.liveState}><Text style={styles.label}>BACKEND STATE</Text><Text style={styles.telemetryLine}>CURRENT STAGE: {currentStage?.stageName || bus?.currentStageId || 'UNAVAILABLE'}</Text><Text style={styles.telemetryLine}>SERVICE: {bus?.status || 'UNKNOWN'}</Text><Text style={styles.telemetryLine}>ETA: {eta?.etaAvailable ? `${eta.etaMinutes} min` : 'UNAVAILABLE'}</Text></View>
       <PrimaryButton label="REPORT SOS" onPress={() => { setSosError(''); setSosVisible(true); }} tone="red" disabled={bus?.status === 'VEHICLE_DISABLED'} />
@@ -161,6 +162,9 @@ const styles = StyleSheet.create({
   value: { color: colors.white, fontSize: 22, fontWeight: '900', marginBottom: 12 },
   metrics: { backgroundColor: colors.panelRaised, borderRadius: 10, padding: 18, gap: 15 },
   metric: { color: colors.green, fontSize: 24, fontWeight: '900', marginTop: 4 },
+  normalCapacity: { color: colors.green },
+  nearCapacity: { color: colors.amber },
+  overCapacity: { color: colors.red },
   telemetry: { backgroundColor: colors.panel, borderRadius: 10, padding: 18, gap: 8 },
   telemetryHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   telemetryTitle: { color: colors.amber, fontSize: 16, fontWeight: '900', letterSpacing: 1 },

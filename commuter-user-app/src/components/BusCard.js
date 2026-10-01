@@ -12,7 +12,9 @@ function occupancyCopy(status) {
 export default function BusCard({ bus, selected, onPress }) {
   const service = serviceCopy(bus.status);
   const occupancy = occupancyCopy(bus.occupancyStatus);
-  return <Pressable onPress={onPress} style={[styles.card, selected && styles.selected]}><View style={styles.heading}><View><Text style={styles.busId}>{bus.busId}</Text><Text style={styles.route}>{bus.routeId}</Text></View><Text style={[styles.service, bus.status === 'VEHICLE_DISABLED' && styles.disabled]}>{service.english}</Text></View><View style={styles.metrics}><View><Text style={styles.label}>STAGE</Text><Text style={styles.value}>{bus.currentStageId || '—'}</Text></View><View><Text style={styles.label}>SEATS</Text><Text style={styles.value}>{bus.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>ETA</Text><Text style={styles.value}>{bus.eta?.etaAvailable ? `${bus.eta.etaMinutes} min` : '—'}</Text></View></View><Text style={styles.occupancy}>{bus.occupancy ?? '—'} occupied · {occupancy.english}</Text><Text style={styles.telugu}>{occupancy.telugu}</Text></Pressable>;
+  const capacity = bus.capacity ?? 50;
+  const occupancyTone = bus.occupancy > capacity ? styles.overCapacity : bus.occupancy >= 40 ? styles.nearCapacity : styles.normalCapacity;
+  return <Pressable onPress={onPress} style={[styles.card, selected && styles.selected]}><View style={styles.heading}><View><Text style={styles.busId}>{bus.busId}</Text><Text style={styles.route}>{bus.routeId}</Text></View><Text style={[styles.service, bus.status === 'VEHICLE_DISABLED' && styles.disabled]}>{service.english}</Text></View><View style={styles.metrics}><View><Text style={styles.label}>STAGE</Text><Text style={styles.value}>{bus.currentStageId || '—'}</Text></View><View><Text style={styles.label}>SEATS</Text><Text style={styles.value}>{bus.availableSeats ?? '—'}</Text></View><View><Text style={styles.label}>ETA</Text><Text style={styles.value}>{bus.eta?.etaAvailable ? `${bus.eta.etaMinutes} min` : '—'}</Text></View></View><Text style={[styles.occupancy, occupancyTone]}>{bus.occupancy ?? '—'} / {capacity} occupied · {occupancy.english}</Text>{bus.occupancy > capacity ? <Text style={styles.overCapacity}>OVER CAPACITY</Text> : null}<Text style={styles.telugu}>{occupancy.telugu}</Text></Pressable>;
 }
 
 const styles = StyleSheet.create({
@@ -27,5 +29,8 @@ const styles = StyleSheet.create({
   label: { color: colors.muted, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   value: { color: colors.text, fontSize: 16, fontWeight: '900', marginTop: 3 },
   occupancy: { color: colors.text, fontSize: 13, fontWeight: '800' },
+  normalCapacity: { color: colors.green },
+  nearCapacity: { color: colors.amber },
+  overCapacity: { color: colors.red, fontWeight: '900' },
   telugu: { color: colors.muted, fontSize: 13 },
 });

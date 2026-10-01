@@ -29,4 +29,6 @@ export const occupancyTranslations = {
   MANY_SEATS_AVAILABLE: { english: 'Seats available', telugu: 'సీట్లు అందుబాటులో ఉన్నాయి' },
   FEW_SEATS_AVAILABLE: { english: 'Few seats available', telugu: 'కొన్ని సీట్లు మాత్రమే ఉన్నాయి' },
   STANDING_ONLY: { english: 'Standing only / full', telugu: 'నిలబడే స్థలం మాత్రమే' },
+  NEAR_CAPACITY: { english: 'Near capacity', telugu: 'సీట్లు దాదాపు నిండాయి' },
+  OVER_CAPACITY: { english: 'OVER CAPACITY', telugu: 'సామర్థ్యాన్ని మించింది' },
 };
