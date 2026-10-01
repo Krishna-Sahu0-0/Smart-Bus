@@ -18,7 +18,7 @@ async function run() {
   await mongoose.connect(process.env.MONGODB_URI);
   const bus = await Bus.findOne({ busId });
   const stages = await Stage.find({ routeId, active: true }).sort({ sequence: 1 }).lean();
-  if (!bus || stages.length < 5) throw new Error('Srikakulam demo bus or stages are missing');
+  if (!bus || stages.length < 7) throw new Error('Srikakulam demo bus or seven stages are missing');
   const events = [];
   const io = { emit: (event, payload) => events.push({ event, payload }) };
   const base = new Date(Date.now());

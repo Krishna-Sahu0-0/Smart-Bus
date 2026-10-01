@@ -18,7 +18,7 @@ async function run() {
   const bus = await Bus.findOne({ busId });
   const route = await Route.findOne({ routeId });
   const stages = await Stage.find({ routeId, active: true }).sort({ sequence: 1 }).lean();
-  if (!bus || !route || stages.length < 5) throw new Error('Srikakulam demo bus, route, or stages are missing');
+  if (!bus || !route || stages.length < 7) throw new Error('Srikakulam demo bus, route, or seven stages are missing');
 
   await Ticket.updateMany({ busId, status: 'ACTIVE' }, { $set: { status: 'CANCELLED' } });
   bus.currentStageId = stages[0].stageId;

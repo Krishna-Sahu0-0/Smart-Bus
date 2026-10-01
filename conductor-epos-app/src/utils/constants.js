@@ -4,6 +4,7 @@ export const DEMO_BUS_ID = process.env.EXPO_PUBLIC_DEMO_BUS_ID || 'AP30Z1234';
 export const DEMO_ROUTE_ID = process.env.EXPO_PUBLIC_DEMO_ROUTE_ID || 'R-SKLM-SMP-01';
 export const DEMO_CONDUCTOR_ID = process.env.EXPO_PUBLIC_CONDUCTOR_ID || 'EMP-1089';
 export const DEMO_CONDUCTOR_PIN = process.env.EXPO_PUBLIC_CONDUCTOR_PIN || '4289';
+export const DEMO_CONDUCTOR_NAME = process.env.EXPO_PUBLIC_CONDUCTOR_NAME || 'Swapna Latha';
 export const SERVICE_NUMBER = process.env.EXPO_PUBLIC_SERVICE_NUMBER || '4289';
 export const DEPOT_CODE = process.env.EXPO_PUBLIC_DEPOT_CODE || 'SKLM-1';
 export const TELEMETRY_INTERVAL_MS = 3000;

@@ -11,10 +11,12 @@ const FALLBACK_STAGES = [
   { stageId: 'STAGE_01', stageName: 'Srikakulam RTC Complex (Depot)', sequence: 1 },
   { stageId: 'STAGE_02', stageName: 'Narasannapeta Bus Stand', sequence: 2 },
   { stageId: 'STAGE_03', stageName: 'Tekkali RTC Bus Station', sequence: 3 },
-  { stageId: 'STAGE_04', stageName: 'Palasa / Kasibugga Bus Stand', sequence: 4 },
-  { stageId: 'STAGE_05', stageName: 'Sompeta RTC Bus Stand', sequence: 5 },
+  { stageId: 'STAGE_04', stageName: 'Polavaram', sequence: 4 },
+  { stageId: 'STAGE_05', stageName: 'Palasa', sequence: 5 },
+  { stageId: 'STAGE_06', stageName: 'Sompeta', sequence: 6 },
+  { stageId: 'STAGE_07', stageName: 'Kanchili Bypass Bus Stop', sequence: 7 },
 ];
-const stageShortNames = ['Srikakulam RTC', 'Narasannapeta', 'Tekkali', 'Palasa / Kasibugga', 'Sompeta'];
+const stageShortNames = ['Srikakulam', 'Narasannapeta', 'Tekkali', 'Polavaram', 'Palasa', 'Sompeta', 'Kanchili Bypass'];
 function cleanStageName(name = '') { return name.replace(' (Depot)', '').replace(' Bus Stand', ''); }
 function occupancyState(available) { if (available <= 0) return { title: 'నిలబడే స్థలం మాత్రమే', english: 'Standing space only', icon: '●', tone: 'red' }; if (available <= 10) return { title: 'కొద్దిగా సీట్లు ఉన్నాయి', english: 'Few seats available', icon: '●', tone: 'amber' }; return { title: 'మంచి సీట్లు ఉన్నాయి', english: 'Seats available', icon: '●', tone: 'green' }; }
 function Header({ connection }) { return <View style={styles.header}><View><Text style={styles.brand}>APSRTC LIVE TRACK</Text><Text style={styles.headerSub}>SRIKAKULAM DISTRICT • PALLE VELUGU</Text></View><View style={styles.connection}><View style={[styles.connectionDot, connection === 'LIVE' ? styles.greenDot : connection === 'OFFLINE' ? styles.redDot : styles.amberDot]} /><Text style={styles.connectionText}>{connection}</Text></View></View>; }

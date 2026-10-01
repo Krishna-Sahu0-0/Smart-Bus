@@ -34,11 +34,11 @@ async function seed() {
   });
   const validUntil = new Date('2026-12-31T23:59:59.999Z');
   await Pass.insertMany([
-    { passId: 'STU-SKLM-2026-01', passType: 'STUDENT', holderName: 'M. Swapna', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_01', 'STAGE_02', 'STAGE_03', 'STAGE_04', 'STAGE_05'], active: true },
-    { passId: 'STU-SKLM-2026-44', passType: 'STUDENT', holderName: 'A. Krishna', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_01', 'STAGE_02', 'STAGE_03'], active: true },
-    { passId: 'STU-SKLM-2026-92', passType: 'STUDENT', holderName: 'S. Dipesh', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_03', 'STAGE_04', 'STAGE_05'], active: true },
+    { passId: 'STU-SKLM-2026-01', passType: 'STUDENT', holderName: 'M. Swapna', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_01', 'STAGE_02', 'STAGE_03', 'STAGE_04', 'STAGE_05', 'STAGE_06', 'STAGE_07'], active: true },
+    { passId: 'STU-SKLM-2026-44', passType: 'STUDENT', holderName: 'A. Krishna', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_01', 'STAGE_02', 'STAGE_03', 'STAGE_04'], active: true },
+    { passId: 'STU-SKLM-2026-92', passType: 'STUDENT', holderName: 'S. Dipesh', validFrom: new Date('2026-01-01T00:00:00.000Z'), validUntil, permittedStages: ['STAGE_03', 'STAGE_04', 'STAGE_05', 'STAGE_06', 'STAGE_07'], active: true },
   ]);
-  console.log('SmartBus Srikakulam seed complete: 1 user, 1 bus, 1 route, 5 stages, 3 sample passes.');
+  console.log('SmartBus Srikakulam seed complete: 1 user, 1 bus, 1 route, 7 stages, 3 sample passes.');
 }
 
 seed().catch((error) => { console.error(`Seed failed: ${error.message}`); process.exitCode = 1; }).finally(() => mongoose.disconnect());

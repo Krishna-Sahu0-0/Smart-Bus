@@ -19,7 +19,7 @@ async function run() {
   execFileSync(process.execPath, ['scripts/seed.js'], { stdio: 'inherit' });
   await mongoose.connect(process.env.MONGODB_URI);
   const bus = await Bus.findOne({ busId }); const stages = await Stage.find({ routeId, active: true }).sort({ sequence: 1 }).lean();
-  if (!bus || stages.length < 5) throw new Error('Srikakulam demo bus or stages are missing');
+  if (!bus || stages.length < 7) throw new Error('Srikakulam demo bus or seven stages are missing');
   const events = []; const io = { emit: (event, payload) => events.push({ event, payload }) }; const base = new Date(Date.now());
   const send = (timestamp, speedKmh, position = outsidePosition) => processTelemetry({ io, bus, routeId, ...position, speedKmh, timestamp });
   const prepare = async (position = outsidePosition) => { resetStationaryState(busId); resetTrafficState(busId); bus.status = 'OPERATIONAL'; bus.currentStageId = stages[0].stageId; bus.currentLatitude = position.latitude; bus.currentLongitude = position.longitude; bus.currentSpeedKmh = 0; bus.trafficDelaySince = null; bus.ewmaSpeedKmh = null; await bus.save(); };

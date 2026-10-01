@@ -1,7 +1,7 @@
 {
   "description": "SmartBus demonstration route for the Srikakulam District NH16 Palle Velugu corridor. Coordinates are demo configuration points for the final-year project and are not official APSRTC operational data.",
   "routeId": "R-SKLM-SMP-01",
-  "routeName": "Srikakulam RTC Complex to Sompeta (Palle Velugu)",
+  "routeName": "Srikakulam RTC Complex to Kanchili Bypass (Palle Velugu)",
   "routeCode": "R-SKLM-SMP-01",
   "serviceType": "PALLE_VELUGU_ORDINARY",
   "farePerStage": 35,
@@ -39,28 +39,35 @@
     },
     {
       "stageId": "STAGE_04",
-      "stageName": "Palasa / Kasibugga Bus Stand",
-      "latitude": 18.769,
-      "longitude": 84.417,
+      "stageName": "Polavaram",
+      "latitude": 18.591,
+      "longitude": 84.225,
       "sequence": 4,
       "routeId": "R-SKLM-SMP-01"
     },
     {
       "stageId": "STAGE_05",
-      "stageName": "Sompeta RTC Bus Stand",
-      "latitude": 18.928,
-      "longitude": 84.588,
+      "stageName": "Palasa",
+      "latitude": 18.769,
+      "longitude": 84.417,
       "sequence": 5,
       "routeId": "R-SKLM-SMP-01"
-    }
-  ],
-  "routeWaypoints": [
+    },
     {
-      "waypointId": "WAYPOINT_POLAVARAM",
-      "name": "Polavaram Village",
-      "latitude": 18.5775,
-      "longitude": 84.2152,
-      "note": "Intermediate corridor waypoint; not a ticketing stage in the five-stage fare model."
+      "stageId": "STAGE_06",
+      "stageName": "Sompeta",
+      "latitude": 18.928,
+      "longitude": 84.588,
+      "sequence": 6,
+      "routeId": "R-SKLM-SMP-01"
+    },
+    {
+      "stageId": "STAGE_07",
+      "stageName": "Kanchili Bypass Bus Stop",
+      "latitude": 18.98707,
+      "longitude": 84.58949,
+      "sequence": 7,
+      "routeId": "R-SKLM-SMP-01"
     }
   ]
 }
